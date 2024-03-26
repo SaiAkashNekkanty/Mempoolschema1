@@ -1,85 +1,75 @@
-openapi: 3.0.0
-info:
-  title: Mining Pools Mempool API
-  version: 1.0.0
-paths:
-  /mining/pools/24h:
-    get:
-      summary: Get mining pool statistics for the last 24 hours
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/miningpool'
+TransactionFee:
+  import: 
+    - React
+    - useState
+    - useEffect
+  path: './TransactionFee.css'
+  component: |
+    export default function TransactionFee() {
+      const [feeData, setFeeData] = useState(null);
 
-components:
-  schemas:
-    DifficultyAdjustmentData:
-      type: object
-      properties:
-        remainingTime:
-          type: integer
-          description: Estimated time until the next difficulty adjustment in seconds
-        timeAvg:
-          type: number
-          description: Average block time in seconds
-        difficultyChange:
-          type: number
-          description: Percentage change in difficulty
-        previousRetarget:
-          type: number
-          description: Percentage of the previous difficulty change
-        nextRetargetHeight:
-          type: integer
-          description: Height at which the next difficulty retarget will occur
-        estimatedRetargetDate:
-          type: string
-          format: date-time
-          description: Expected date and time of the next difficulty adjustment
+      useEffect(() => {
+        fetch('https://mempool.space/api/v1/fees/recommended')
+          .then(response => response.json())
+          .then(data => setFeeData(data))
+          .catch(error => console.error('Error fetching data:', error));
+      }, []);
 
-    DifficultyAdjustment:
-      type: object
-      properties:
-        difficultyData:
-          $ref: "#/components/schemas/DifficultyAdjustmentData"
-        errorMessage:
-          type: string
-          description: Error message if there is any issue fetching the data
+      return (
+        <div className="transaction-fee">
+          <h2>Transaction Fees</h2>
+          {feeData && (
+            <div className="fee-details">
+              <p><strong>No Priority:</strong> {feeData.minimumFee} sat/vB, ${feeData.minimumFee * 0.00000001 * 80}</p>
+              <p><strong>Low Priority:</strong> {feeData.economyFee} sat/vB, ${feeData.economyFee * 0.00000001 * 80}</p>
+              <p><strong>Medium Priority:</strong> {feeData.hourFee} sat/vB, ${feeData.hourFee * 0.00000001 * 80}</p>
+              <p><strong>High Priority:</strong> {feeData.halfHourFee} sat/vB, ${feeData.halfHourFee * 0.00000001 * 80}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
 
+DifficultyAdjustment:
+  import: 
+    - React
+    - useState
+    - useEffect
+  path: './DifficultyAdjustment.css'
+  component: |
+    export default function DifficultyAdjustment() {
+      const [difficultyData, setDifficultyData] = useState(null);
 
+      useEffect(() => {
+        fetch('https://mempool.space/api/v1/difficulty-adjustment')
+          .then(response => response.json())
+          .then(data => setDifficultyData(data))
+          .catch(error => console.error('Error fetching data:', error));
+      }, []);
 
+      // Function to convert seconds to human-readable time format
+      const secondsToTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+        const remainingMinutes = minutes % 60;
+        return `${days} days, ${remainingHours} hours, ${remainingMinutes} minutes`;
+      };
 
-
-
-components:
-  schemas:
-    TransactionFeeData:
-      type: object
-      properties:
-        minimumFee:
-          type: number
-          description: Fee rate for transactions with no priority (sat/vB)
-        economyFee:
-          type: number
-          description: Fee rate for transactions with low priority (sat/vB)
-        hourFee:
-          type: number
-          description: Fee rate for transactions with medium priority (sat/vB)
-        halfHourFee:
-          type: number
-          description: Fee rate for transactions with high priority (sat/vB)
-
-components:
-  schemas:
-    TransactionFee:
-      type: object
-      properties:
-        feeData:
-          $ref: "#/components/schemas/TransactionFeeData"
-          description: Data related to transaction fees
-        errorMessage:
-          type: string
-          description: Error message if there is any issue fetching the data
-          
+      return (
+        <div className="difficulty-adjustment">
+          <h2>Difficulty Adjustment</h2>
+          {difficultyData && (
+            <div className="difficulty-details">
+              <p>Estimated next difficulty adjustment in: {secondsToTime(difficultyData.remainingTime)}</p>
+              <p>Average block time: {difficultyData.timeAvg} seconds</p>
+              <p>Change in difficulty: {difficultyData.difficultyChange}%</p>
+              <p>Previous difficulty change: {difficultyData.previousRetarget}%</p>
+              <p>Next difficulty retarget height: {difficultyData.nextRetargetHeight}</p>
+              <p>Expected difficulty adjustment date: {new Date(difficultyData.estimatedRetargetDate).toLocaleString()}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
